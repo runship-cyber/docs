@@ -6,10 +6,11 @@ redirect_from:
   - /articles/disabling-oauth-app-access-restrictions-for-your-organization
   - /github/setting-up-and-managing-organizations-and-teams/disabling-oauth-app-access-restrictions-for-your-organization
 versions:
-  free-pro-team: '*'
+  fpt: '*'
 topics:
-  - organizations
-  - teams
+  - Organizations
+  - Teams
+shortTitle: Disable OAuth App
 ---
 
 {% danger %}
@@ -18,9 +19,8 @@ topics:
 
 {% enddanger %}
 
-{% data reusables.profile.access_profile %}
 {% data reusables.profile.access_org %}
-{% data reusables.organizations.org_settings %}
+{% data reusables.profile.org_settings %}
 {% data reusables.organizations.oauth_app_access %}
 5. Click **Remove restrictions**.
   ![Remove restrictions button](/assets/images/help/settings/settings-third-party-remove-restrictions.png)

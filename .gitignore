@@ -10,6 +10,8 @@ coverage/
 /content/early-access
 /data/early-access
 dist
+.next
+.eslintcache
 
 # blc: broken link checker
 blc_output.log

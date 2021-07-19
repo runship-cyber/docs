@@ -6,10 +6,11 @@ redirect_from:
   - /articles/enabling-oauth-app-access-restrictions-for-your-organization
   - /github/setting-up-and-managing-organizations-and-teams/enabling-oauth-app-access-restrictions-for-your-organization
 versions:
-  free-pro-team: '*'
+  fpt: '*'
 topics:
-  - organizations
-  - teams
+  - Organizations
+  - Teams
+shortTitle: Enable OAuth App
 ---
 
 {% data reusables.organizations.oauth_app_restrictions_default %}
@@ -23,9 +24,8 @@ topics:
 
 {% endwarning %}
 
-{% data reusables.profile.access_profile %}
 {% data reusables.profile.access_org %}
-{% data reusables.organizations.org_settings %}
+{% data reusables.profile.org_settings %}
 {% data reusables.organizations.oauth_app_access %}
 5. Under "Third-party application access policy," click **Setup application access restrictions**.
   ![Set up restrictions button](/assets/images/help/settings/settings-third-party-set-up-restrictions.png)

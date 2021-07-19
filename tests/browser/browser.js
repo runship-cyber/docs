@@ -1,7 +1,12 @@
+import fs from 'fs'
+import path from 'path'
+import sleep from 'await-sleep'
+import { jest } from '@jest/globals'
+import { latest } from '../../lib/enterprise-server-releases.js'
+import languages from '../../lib/languages.js'
+
 /* global page, browser */
-const sleep = require('await-sleep')
-const { latest } = require('../../lib/enterprise-server-releases')
-const languages = require('../../lib/languages')
+const featureFlags = JSON.parse(fs.readFileSync(path.join(process.cwd(), './feature-flags.json')))
 
 describe('homepage', () => {
   jest.setTimeout(60 * 1000)
@@ -17,20 +22,33 @@ describe('browser search', () => {
 
   it('works on the homepage', async () => {
     await page.goto('http://localhost:4001/en')
-    await page.click('#search-input-container input[type="search"]')
-    await page.type('#search-input-container input[type="search"]', 'actions')
+    await page.click('[data-testid=site-search-input]')
+    await page.type('[data-testid=site-search-input]', 'actions')
     await page.waitForSelector('.ais-Hits')
     const hits = await page.$$('.ais-Hits-item')
     expect(hits.length).toBeGreaterThan(5)
   })
 
-  it('works on article pages', async () => {
+  it('works on mobile landing pages', async () => {
     await page.goto('http://localhost:4001/en/actions')
-    await page.click('#search-input-container input[type="search"]')
-    await page.type('#search-input-container input[type="search"]', 'workflows')
+    await page.click('[data-testid=mobile-menu-button]')
+    await page.click('[data-testid=mobile-header] [data-testid=site-search-input]')
+    await page.type('[data-testid=mobile-header] [data-testid=site-search-input]', 'workflows')
     await page.waitForSelector('.ais-Hits')
     const hits = await page.$$('.ais-Hits-item')
     expect(hits.length).toBeGreaterThan(5)
+  })
+
+  it('works on desktop landing pages', async () => {
+    const initialViewport = page.viewport()
+    await page.setViewport({ width: 1024, height: 768 })
+    await page.goto('http://localhost:4001/en/actions')
+    await page.click('[data-testid=desktop-header] [data-testid=site-search-input]')
+    await page.type('[data-testid=desktop-header] [data-testid=site-search-input]', 'workflows')
+    await page.waitForSelector('.ais-Hits')
+    const hits = await page.$$('.ais-Hits-item')
+    expect(hits.length).toBeGreaterThan(5)
+    await page.setViewport(initialViewport)
   })
 
   it('works on 404 error page', async () => {
@@ -49,7 +67,7 @@ describe('browser search', () => {
     await newPage.goto('http://localhost:4001/ja/enterprise-server@2.22/admin/installation')
 
     await newPage.setRequestInterception(true)
-    newPage.on('request', interceptedRequest => {
+    newPage.on('request', (interceptedRequest) => {
       if (interceptedRequest.method() === 'GET' && /search\?/i.test(interceptedRequest.url())) {
         const { searchParams } = new URL(interceptedRequest.url())
         expect(searchParams.get('version')).toBe('2.22')
@@ -58,8 +76,12 @@ describe('browser search', () => {
       interceptedRequest.continue()
     })
 
-    await newPage.click('#search-input-container input[type="search"]')
-    await newPage.type('#search-input-container input[type="search"]', 'test')
+    await newPage.click('[data-testid=mobile-menu-button]')
+    const searchInput = await newPage.$(
+      '[data-testid=mobile-header] [data-testid=site-search-input]'
+    )
+    await searchInput.click()
+    await searchInput.type('test')
     await newPage.waitForSelector('.search-result')
   })
 
@@ -70,7 +92,7 @@ describe('browser search', () => {
     await newPage.goto('http://localhost:4001/en/github-ae@latest/admin/overview')
 
     await newPage.setRequestInterception(true)
-    newPage.on('request', interceptedRequest => {
+    newPage.on('request', (interceptedRequest) => {
       if (interceptedRequest.method() === 'GET' && /search\?/i.test(interceptedRequest.url())) {
         const { searchParams } = new URL(interceptedRequest.url())
         expect(searchParams.get('version')).toBe('ghae')
@@ -79,51 +101,59 @@ describe('browser search', () => {
       interceptedRequest.continue()
     })
 
-    await newPage.click('#search-input-container input[type="search"]')
-    await newPage.type('#search-input-container input[type="search"]', 'test')
+    await newPage.click('[data-testid=mobile-menu-button]')
+    const searchInput = await newPage.$(
+      '[data-testid=mobile-header] [data-testid=site-search-input]'
+    )
+    await searchInput.click()
+    await searchInput.type('test')
     await newPage.waitForSelector('.search-result')
   })
 })
 
-describe('helpfulness', () => {
+describe('survey', () => {
   it('sends an event to /events when submitting form', async () => {
     // Visit a page that displays the prompt
-    await page.goto('http://localhost:4001/en/actions/getting-started-with-github-actions/about-github-actions')
+    await page.goto(
+      'http://localhost:4001/en/actions/getting-started-with-github-actions/about-github-actions'
+    )
 
     // Track network requests
     await page.setRequestInterception(true)
-    page.on('request', request => {
+    page.on('request', (request) => {
       // Ignore GET requests
       if (!/\/events$/.test(request.url())) return request.continue()
       expect(request.method()).toMatch(/POST|PUT/)
       request.respond({
         contentType: 'application/json',
         body: JSON.stringify({ id: 'abcd1234' }),
-        status: 200
+        status: 200,
       })
     })
 
     // When I click the "Yes" button
-    await page.click('.js-helpfulness [for=helpfulness-yes]')
+    await page.click('[data-testid=survey-form] [for=survey-yes]')
     // (sent a POST request to /events)
     // I see the request for my email
-    await page.waitForSelector('.js-helpfulness [type="email"]')
+    await page.waitForSelector('[data-testid=survey-form] [type="email"]')
 
     // When I fill in my email and submit the form
-    await page.type('.js-helpfulness [type="email"]', 'test@example.com')
+    await page.type('[data-testid=survey-form] [type="email"]', 'test@example.com')
 
     await sleep(1000)
 
-    await page.click('.js-helpfulness [type="submit"]')
+    await page.click('[data-testid=survey-form] [type="submit"]')
     // (sent a PUT request to /events/{id})
     // I see the feedback
-    await page.waitForSelector('.js-helpfulness [data-help-end]')
+    await page.waitForSelector('[data-testid=survey-end]')
   })
 })
 
 describe('csrf meta', () => {
   it('should have a csrf-token meta tag on the page', async () => {
-    await page.goto('http://localhost:4001/en/actions/getting-started-with-github-actions/about-github-actions')
+    await page.goto(
+      'http://localhost:4001/en/actions/getting-started-with-github-actions/about-github-actions'
+    )
     await page.waitForSelector('meta[name="csrf-token"]')
   })
 })
@@ -131,14 +161,28 @@ describe('csrf meta', () => {
 describe('platform specific content', () => {
   // from tests/javascripts/user-agent.js
   const userAgents = [
-    { name: 'Mac', id: 'mac', ua: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_2) AppleWebKit/601.3.9 (KHTML, like Gecko) Version/9.0.2 Safari/601.3.9' },
-    { name: 'Windows', id: 'windows', ua: 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.111 Safari/537.36' },
-    { name: 'Linux', id: 'linux', ua: 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:15.0) Gecko/20100101 Firefox/15.0.1' }
+    {
+      name: 'Mac',
+      id: 'mac',
+      ua: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_2) AppleWebKit/601.3.9 (KHTML, like Gecko) Version/9.0.2 Safari/601.3.9',
+    },
+    {
+      name: 'Windows',
+      id: 'windows',
+      ua: 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.111 Safari/537.36',
+    },
+    {
+      name: 'Linux',
+      id: 'linux',
+      ua: 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:15.0) Gecko/20100101 Firefox/15.0.1',
+    },
   ]
   const linuxUserAgent = userAgents[2]
-  const pageWithSwitcher = 'http://localhost:4001/en/github/using-git/configuring-git-to-handle-line-endings'
+  const pageWithSwitcher =
+    'http://localhost:4001/en/github/using-git/configuring-git-to-handle-line-endings'
   const pageWithoutSwitcher = 'http://localhost:4001/en/github/using-git'
-  const pageWithDefaultPlatform = 'http://localhost:4001/en/actions/hosting-your-own-runners/configuring-the-self-hosted-runner-application-as-a-service'
+  const pageWithDefaultPlatform =
+    'http://localhost:4001/en/actions/hosting-your-own-runners/configuring-the-self-hosted-runner-application-as-a-service'
 
   it('should have a platform switcher', async () => {
     await page.goto(pageWithSwitcher)
@@ -165,7 +209,7 @@ describe('platform specific content', () => {
       await page.setUserAgent(agent.ua)
       await page.goto(pageWithSwitcher)
       const selectedPlatformElement = await page.waitForSelector('a.platform-switcher.selected')
-      const selectedPlatform = await page.evaluate(el => el.textContent, selectedPlatformElement)
+      const selectedPlatform = await page.evaluate((el) => el.textContent, selectedPlatformElement)
       expect(selectedPlatform).toBe(agent.name)
     }
   })
@@ -174,9 +218,12 @@ describe('platform specific content', () => {
     for (const agent of userAgents) {
       await page.setUserAgent(agent.ua)
       await page.goto(pageWithDefaultPlatform)
-      const defaultPlatform = await page.$eval('[data-default-platform]', el => el.dataset.defaultPlatform)
+      const defaultPlatform = await page.$eval(
+        '[data-default-platform]',
+        (el) => el.dataset.defaultPlatform
+      )
       const selectedPlatformElement = await page.waitForSelector('a.platform-switcher.selected')
-      const selectedPlatform = await page.evaluate(el => el.textContent, selectedPlatformElement)
+      const selectedPlatform = await page.evaluate((el) => el.textContent, selectedPlatformElement)
       expect(defaultPlatform).toBe(linuxUserAgent.id)
       expect(selectedPlatform).toBe(linuxUserAgent.name)
     }
@@ -197,7 +244,7 @@ describe('platform specific content', () => {
       expect(selectedSwitch).toHaveLength(1)
 
       // content for NOT selected platforms is expected to become hidden
-      const otherPlatforms = platforms.filter(e => e !== platform)
+      const otherPlatforms = platforms.filter((e) => e !== platform)
       for (const other of otherPlatforms) {
         await page.waitForSelector(`.extended-markdown.${other}`, { hidden: true, timeout: 3000 })
       }
@@ -205,70 +252,69 @@ describe('platform specific content', () => {
   })
 })
 
-describe('card filters', () => {
+describe('code examples', () => {
   it('loads correctly', async () => {
     await page.goto('http://localhost:4001/en/actions')
-    const shownCards = await page.$$('.js-filter-card:not(.d-none)')
-    const shownNoResult = await page.$('.js-filter-card-no-results:not(.d-none)')
-    const maxCards = await page.$eval('.js-filter-card-show-more', btn => parseInt(btn.dataset.jsFilterCardMax))
-    expect(shownCards.length).toBe(maxCards)
+    const shownCards = await page.$$('[data-testid=code-example-card]')
+    const shownNoResult = await page.$('[data-testid=code-examples-no-results]')
+    expect(shownCards.length).toBeGreaterThan(0)
     expect(shownNoResult).toBeNull()
   })
 
   it('filters cards', async () => {
     await page.goto('http://localhost:4001/en/actions')
-    await page.click('input.js-filter-card-filter')
-    await page.type('input.js-filter-card-filter', 'issues')
-    const shownCards = await page.$$('.js-filter-card:not(.d-none)')
-    const showMoreClasses = await page.$eval('.js-filter-card-show-more', btn => Object.values(btn.classList))
-    expect(showMoreClasses).toContain('d-none')
+    await page.click('[data-testid=code-examples-input]')
+    await page.type('[data-testid=code-examples-input]', 'issues')
+    const shownCards = await page.$$('[data-testid=code-example-card]')
     expect(shownCards.length).toBeGreaterThan(1)
   })
 
+  it('shows more cards', async () => {
+    await page.goto('http://localhost:4001/en/actions')
+    const initialCards = await page.$$('[data-testid=code-example-card]')
+    await page.click('[data-testid=code-examples-show-more]')
+    const moreCards = await page.$$('[data-testid=code-example-card]')
+    expect(moreCards.length).toBe(initialCards.length * 2)
+  })
+
+  it('displays no result message', async () => {
+    await page.goto('http://localhost:4001/en/actions')
+    await page.click('[data-testid=code-examples-input]')
+    await page.type('[data-testid=code-examples-input]', 'this should not work')
+    const shownCards = await page.$$('[data-testid=code-example-card]')
+    expect(shownCards.length).toBe(0)
+    const noResultsMessage = await page.$('[data-testid=code-examples-no-results]')
+    expect(noResultsMessage).not.toBeNull()
+  })
+})
+
+describe('filter cards', () => {
   it('works with select input', async () => {
     await page.goto('http://localhost:4001/en/actions/guides')
-    await page.select('.js-filter-card-filter-dropdown[name="type"]', 'overview')
-    const shownCards = await page.$$('.js-filter-card:not(.d-none)')
-    const shownCardsAttrib = await page.$$eval('.js-filter-card:not(.d-none)', cards =>
-      cards.map(card => card.dataset.type)
+    await page.select('[data-testid=card-filter-dropdown][name="type"]', 'overview')
+    const shownCards = await page.$$('[data-testid=article-card]')
+    const shownCardTypes = await page.$$eval('[data-testid=article-card-type]', (cardTypes) =>
+      cardTypes.map((cardType) => cardType.textContent)
     )
-    shownCardsAttrib.map(attrib => expect(attrib).toBe('overview'))
+    shownCardTypes.map((type) => expect(type).toBe('Overview'))
     expect(shownCards.length).toBeGreaterThan(0)
   })
 
   it('works with select input on an Enterprise version', async () => {
     await page.goto(`http://localhost:4001/en/enterprise-server@${latest}/actions/guides`)
-    await page.select('.js-filter-card-filter-dropdown[name="type"]', 'overview')
-    const shownCards = await page.$$('.js-filter-card:not(.d-none)')
-    const shownCardsAttrib = await page.$$eval('.js-filter-card:not(.d-none)', cards =>
-      cards.map(card => card.dataset.type)
+    await page.select('[data-testid=card-filter-dropdown][name="type"]', 'overview')
+    const shownCards = await page.$$('[data-testid=article-card]')
+    const shownCardTypes = await page.$$eval('[data-testid=article-card-type]', (cardTypes) =>
+      cardTypes.map((cardType) => cardType.textContent)
     )
-    shownCardsAttrib.map(attrib => expect(attrib).toBe('overview'))
+    shownCardTypes.map((type) => expect(type).toBe('Overview'))
     expect(shownCards.length).toBeGreaterThan(0)
-  })
-
-  it('shows more cards', async () => {
-    await page.goto('http://localhost:4001/en/actions')
-    const maxCards = await page.$eval('.js-filter-card-show-more', btn => parseInt(btn.dataset.jsFilterCardMax))
-    await page.click('.js-filter-card-show-more')
-    const shownCards = await page.$$('.js-filter-card:not(.d-none)')
-    expect(shownCards.length).toBe(maxCards * 2)
-  })
-
-  it('displays no result message', async () => {
-    await page.goto('http://localhost:4001/en/actions')
-    await page.click('input.js-filter-card-filter')
-    await page.type('input.js-filter-card-filter', 'this should not work')
-    const shownCards = await page.$$('.js-filter-card:not(.d-none)')
-    expect(shownCards.length).toBe(0)
-    const noResultsClasses = await page.$eval('.js-filter-card-no-results', elem => Object.values(elem.classList))
-    expect(noResultsClasses).not.toContain('d-none')
   })
 })
 
 describe('language banner', () => {
   it('directs user to the English version of the article', async () => {
-    const wipLanguageKey = Object.keys(languages).find(key => languages[key].wip)
+    const wipLanguageKey = Object.keys(languages).find((key) => languages[key].wip)
 
     // This kinda sucks, but if we don't have a WIP language, we currently can't
     // run a reliable test. But hey, on the bright side, if we don't have a WIP
@@ -276,7 +322,7 @@ describe('language banner', () => {
     if (wipLanguageKey) {
       const res = await page.goto(`http://localhost:4001/${wipLanguageKey}/actions`)
       expect(res.ok()).toBe(true)
-      const href = await page.$eval('a#to-english-doc', el => el.href)
+      const href = await page.$eval('a#to-english-doc', (el) => el.href)
       expect(href.endsWith('/en/actions')).toBe(true)
     }
   })
@@ -306,5 +352,40 @@ describe('GraphQL Explorer', () => {
     await page.waitForSelector('#search-results-container')
     const searchResult = await page.$('#search-results-container.js-open')
     expect(searchResult).toBeNull()
+  })
+})
+
+describe('nextjs query param', () => {
+  jest.setTimeout(60 * 1000)
+
+  it('landing page renders through nextjs pipeline depending on FEATURE_NEXTJS value', async () => {
+    const flagVal = featureFlags.FEATURE_NEXTJS
+    await page.goto('http://localhost:4001/en/actions?nextjs=')
+    const IS_NEXTJS_PAGE = await page.evaluate(() => window.IS_NEXTJS_PAGE)
+    const nextWrapper = await page.$('#__next')
+    flagVal === true ? expect(nextWrapper).toBeDefined() : expect(nextWrapper).toBeNull()
+    flagVal === true ? expect(IS_NEXTJS_PAGE).toBe(true) : expect(IS_NEXTJS_PAGE).toBe(false)
+  })
+})
+
+// Skipping because next/links are disabled by default for now
+describe.skip('next/link client-side navigation', () => {
+  jest.setTimeout(60 * 1000)
+
+  it('should have 200 response to /_next/data when link is clicked', async () => {
+    const initialViewport = page.viewport()
+    await page.setViewport({ width: 1024, height: 768 })
+    await page.goto('http://localhost:4001/en/actions/guides')
+
+    const [response] = await Promise.all([
+      page.waitForResponse((response) =>
+        response.url().startsWith('http://localhost:4001/_next/data')
+      ),
+      page.waitForNavigation({ waitUntil: 'networkidle2' }),
+      page.click('.sidebar-articles:nth-child(2) .sidebar-article:nth-child(1) a'),
+    ])
+
+    expect(response.status()).toBe(200)
+    await page.setViewport(initialViewport)
   })
 })
