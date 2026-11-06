@@ -1,15 +1,16 @@
 name: Notify When Maintainers Cannot Edit
 
-# **What it does**: Notifies the author of a PR when their PR does not allow maintainers to edit it.
-# **Why we have it**: To prevent having to do this manually.
-# **Who does it impact**: Open-source.
+# Public PR authors get a maintainer-edit notice without maintainers checking
+# the fork setting manually.
 
 on:
+  # pull_request_target lets forked PRs receive the maintainer-edit notice.
   pull_request_target:
     types:
       - opened
 
 permissions:
+  contents: read
   pull-requests: write
 
 jobs:
@@ -17,7 +18,7 @@ jobs:
     if: github.repository == 'github/docs'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/github-script@2b34a689ec86a68d8ab9478298f91d5401337b7d
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
         with:
           script: |
             const query = `
@@ -52,7 +53,7 @@ jobs:
               if (!pullRequest.maintainerCanModify) {
                 console.log('PR not owned by github and does not have maintainer edits enabled');
 
-                await github.issues.createComment({
+                await github.rest.issues.createComment({
                   issue_number: pullNumber,
                   owner: 'github',
                   repo: 'docs',

@@ -1,13 +1,11 @@
 name: Add docs-reviewers request to the docs-content review board
 
-# **What it does**: Adds PRs in github/github that requested a review from docs-reviewers to the docs-content review board
-# **Why we have it**: To catch docs-reviewers requests in github/github
-# **Who does it impact**: docs-content maintainers
+# Catches audit-log-allowlists docs-reviewers requests that the regular board misses.
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: '50 */6 * * *'
+    - cron: '20 16 * * 1-5' # Weekdays at 16:20 UTC.
 
 permissions:
   contents: read
@@ -20,26 +18,30 @@ jobs:
 
     steps:
       - name: Check out repo content
-        uses: actions/checkout@1e204e9a9253d643386038d443f96446fa156a97
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-      - name: Setup Node
-        uses: actions/setup-node@270253e841af726300e85d718a5f606959b2903c
-        with:
-          node-version: 16.8.x
-          cache: npm
+      - name: Set up Node and dependencies
+        uses: ./.github/actions/node-npm-setup
 
-      - name: Install dependencies
-        run: npm install @octokit/graphql
-
-      - name: Run script
+      - name: Run script for audit-log-allowlists
         run: |
-          node .github/actions-scripts/fr-add-docs-reviewers-requests.js
+          npm run fr-add-docs-reviewers-requests
         env:
-          TOKEN: ${{ secrets.DOCS_BOT_FR }}
+          TOKEN: ${{ secrets.DOCS_BOT_PAT_BASE }}
           PROJECT_NUMBER: 2936
           ORGANIZATION: 'github'
-          REPO: 'github'
+          REPO: 'audit-log-allowlists'
           REVIEWER: 'docs-reviewers'
-          # This is an educated guess of how many PRs are opened in a day on the github/github repo
-          # If we are missing PRs, either increase this number or increase the frequency at which this script is run
-          NUM_PRS: 100
+          FEATURE: 'Audit log event descriptions'
+
+      - uses: ./.github/actions/create-workflow-failure-issue
+        id: create-failure-issue
+        if: ${{ failure() && github.event_name != 'workflow_dispatch' }}
+        with:
+          token: ${{ secrets.DOCS_BOT_PAT_BASE }}
+
+      - uses: ./.github/actions/slack-alert
+        if: ${{ failure() && github.event_name != 'workflow_dispatch' }}
+        with:
+          slack_token: ${{ secrets.SLACK_DOCS_BOT_TOKEN }}
+          issue_url: ${{ steps.create-failure-issue.outputs.issue_url }}

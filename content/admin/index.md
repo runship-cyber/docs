@@ -1,7 +1,7 @@
 ---
 title: Enterprise administrator documentation
 shortTitle: Enterprise administrators
-intro: 'Documentation and guides for enterprise administrators{% ifversion ghes %}, system administrators,{% endif %} and security specialists who {% ifversion ghes %}deploy, {% endif %}configure{% ifversion ghes %},{% endif %} and manage {% data variables.product.product_name %}.'
+intro: Documentation and guides for enterprise administrators{% ifversion ghes %}, system administrators,{% endif %} and security specialists who {% ifversion ghes %}deploy, {% endif %}configure{% ifversion ghes %},{% endif %} and manage {% data variables.product.prodname_enterprise %}.
 redirect_from:
   - /github/setting-up-and-managing-your-enterprise/managing-your-enterprise-account
   - /github/setting-up-and-managing-your-enterprise
@@ -10,9 +10,7 @@ redirect_from:
   - /github/installing-and-configuring-github-insights/key-metrics-for-collaboration-in-pull-requests
   - /github/installing-and-configuring-github-insights/viewing-and-filtering-key-metrics-and-reports
   - /github/installing-and-configuring-github-insights/github-insights-and-data-protection-for-your-organization
-  - /enterprise-server@2.22/github/site-policy/github-insights-and-data-protection-for-your-organization
-  - /enterprise-server@2.21/github/site-policy/github-insights-and-data-protection-for-your-organization
-  - /enterprise-server@2.20/github/site-policy/github-insights-and-data-protection-for-your-organization
+  - /github/site-policy/github-insights-and-data-protection-for-your-organization
   - /insights/installing-and-configuring-github-insights/configuring-the-connection-between-github-insights-and-github-enterprise
   - /github/installing-and-configuring-github-insights/navigating-between-github-insights-and-github-enterprise
   - /github/installing-and-configuring-github-insights/enabling-a-link-between-github-insights-and-github-enterprise
@@ -65,62 +63,54 @@ redirect_from:
   - /insights/installing-and-configuring-github-insights/managing-data-in-github-insights/managing-organizations
   - /insights/installing-and-configuring-github-insights/managing-data-in-github-insights/managing-repositories
   - /admin/configuration/configuring-your-enterprise/configuring-data-encryption-for-your-enterprise
-introLinks:
-  overview: '{% ifversion ghes %}/admin/overview/system-overview{% elsif ghae %}/admin/overview/about-github-ae{% elsif ghec %}/admin/overview/about-enterprise-accounts{% endif %}'
-changelog:
-  label: enterprise
-featuredLinks:
-  guides:
-    - '{% ifversion ghae %}/billing/managing-billing-for-your-github-account/about-billing-for-your-enterprise{% endif %}'
-    - '{% ifversion ghae %}/admin/user-management/auditing-users-across-your-enterprise{% endif %}'
-    - '{% ifversion ghae %}/admin/configuration/restricting-network-traffic-to-your-enterprise{% endif %}'
-    - '{% ifversion ghes %}/admin/configuration/configuring-backups-on-your-appliance{% endif %}'
-    - '{% ifversion ghes %}/admin/enterprise-management/creating-a-high-availability-replica{% endif %}'
-    - '{% ifversion ghes %}/admin/enterprise-management/upgrading-github-enterprise-server{% endif %}'
-    - '{% ifversion ghec %}/admin/user-management/managing-users-in-your-enterprise/roles-in-an-enterprise{% endif %}'
-    - '{% ifversion ghec %}/admin/authentication/managing-identity-and-access-for-your-enterprise/about-identity-and-access-management-for-your-enterprise{% endif %}'
-    - '{% ifversion ghec %}/admin/user-management/managing-organizations-in-your-enterprise/adding-organizations-to-your-enterprise{% endif %}'
-  guideCards:
-    - '{% ifversion ghes > 2.22 %} /admin/github-actions/getting-started-with-github-actions-for-github-enterprise-server {% elsif ghes < 3.0 %} /admin/enterprise-management/upgrading-github-enterprise-server {% endif %}'
-    - '{% ifversion ghes > 2.22 %} /admin/packages/getting-started-with-github-packages-for-your-enterprise {% elsif ghes < 3.0 %} /admin/user-management/customizing-user-messages-for-your-enterprise {% endif %}'
-    - '{% ifversion ghes > 2.22 %} /admin/configuration/configuring-advanced-security-features {% elsif ghes < 3.0 %} /admin/installation/setting-up-a-staging-instance {% endif %}'
-    - '{% ifversion ghae %}/admin/configuration/initializing-github-ae{% endif %}'
-    - '{% ifversion ghae %}/admin/user-management/customizing-user-messages-for-your-enterprise{% endif %}'
-    - '{% ifversion ghae %}/admin/github-actions/getting-started-with-github-actions-for-github-ae{% endif %}'
-    - '{% ifversion ghec %}/admin/policies/enforcing-policies-for-your-enterprise/enforcing-github-actions-policies-for-your-enterprise{% endif %}'
-    - '{% ifversion ghec %}/admin/policies/enforcing-policies-for-your-enterprise/enforcing-policies-for-advanced-security-in-your-enterprise{% endif %}'
-    - '{% ifversion ghec %}/admin/policies/enforcing-policies-for-your-enterprise/enforcing-repository-management-policies-in-your-enterprise{% endif %}'
-  popular:
-    - '{% ifversion ghae %}/admin/release-notes{% endif %}'
-    - '{% ifversion ghes %}/github/getting-started-with-github/setting-up-a-trial-of-github-enterprise-server{% endif %}'
-    - '{% ifversion ghes %}/admin/installation{% endif %}'
-    - '{% ifversion ghae %}/admin/authentication/configuring-authentication-and-provisioning-for-your-enterprise-using-azure-ad{% endif %}'
-    - '{% ifversion ghae %}/admin/overview/about-upgrades-to-new-releases{% endif %}'
-    - '{% ifversion ghes %}/billing/managing-your-license-for-github-enterprise{% endif %}'
-    - '{% ifversion ghes %}/admin/configuration/command-line-utilities{% endif %}'
-    - '{% ifversion ghec %}/admin/configuration/configuring-your-enterprise/verifying-or-approving-a-domain-for-your-enterprise{% endif %}'
-    - '{% ifversion ghec %}/admin/user-management/managing-organizations-in-your-enterprise/viewing-the-audit-logs-for-organizations-in-your-enterprise{% endif %}'
-    - '{% ifversion ghec %}/admin/user-management/monitoring-activity-in-your-enterprise/managing-global-webhooks{% endif %}'
-    - /admin/enterprise-support/about-github-enterprise-support
-layout: product-landing
+  - /admin/guides
+layout: discovery-landing
+includedCategories:
+  - Get started with GitHub Enterprise
+  - Install and configure your instance
+  - Configure authentication
+  - Provision and manage enterprise users
+  - Manage accounts and repositories
+  - Secure and govern your enterprise
+  - Monitor and audit your enterprise
+  - Back up and upgrade your instance
+  - Scale your instance
+  - Troubleshoot your instance
+  - Enable GitHub features for your enterprise
+carousels:
+  recommended:
+    - /admin/overview/about-github-enterprise-cloud
+    - /admin/overview/about-github-enterprise-server
+    - /admin/concepts/enterprise-fundamentals/enterprise-accounts
+    - /admin/concepts/identity-and-access-management/identity-and-access-management-fundamentals
+    - /admin/concepts/identity-and-access-management/enterprise-managed-users
+    - /admin/concepts/security-and-compliance/audit-log-for-an-enterprise
+    - /admin/overview/about-upgrades-to-new-releases
+    - /admin/overview/accessing-compliance-reports-for-your-enterprise
+    - /admin/managing-github-actions-for-your-enterprise/getting-started-with-github-actions-for-your-enterprise/getting-started-with-github-actions-for-github-enterprise-server
 versions:
   ghec: '*'
   ghes: '*'
-  ghae: '*'
 children:
+  - /enterprise-onboarding
   - /overview
-  - /installation
-  - /configuration
-  - /authentication
-  - /user-management
-  - /policies
-  - /enterprise-management
-  - /github-actions
-  - /packages
-  - /enterprise-support
-  - /advanced-security
-  - /guides
+  - /concepts
+  - /data-residency
+  - /managing-your-enterprise-account
+  - /installing-your-enterprise-server
+  - /configuring-settings
+  - /administering-your-instance
+  - /managing-iam
+  - /managing-accounts-and-repositories
+  - /upgrading-your-instance
+  - /backing-up-and-restoring-your-instance
+  - /enforcing-policies
+  - /monitoring-activity-in-your-enterprise
+  - /monitoring-and-managing-your-instance
+  - /troubleshooting-your-instance
+  - /managing-github-apps-for-your-enterprise
+  - /managing-github-actions-for-your-enterprise
+  - /configuring-packages
   - /release-notes
   - /all-releases
 ---
-
